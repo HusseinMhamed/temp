@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+    <table id="table" border="1">
+        <caption>كلية التمريض</caption>
+        <tr>
+            <th>الاسم</th>
+            <th>التخصص</th>
+            <th>صورة</th>
+            <th>تم النشر</th>
+        </tr>
+        <!-- <tr class="input-row">
+            <td><input type="text" class="name-input"></td>
+            <td><input type="text" class="specialty-input"></td>
+            <td><input type="file" class="image-input"></td>
+            <td><input type="text" class="published-input"></td>
+        </tr> -->
+    </table>
+    <button id="logout-button">تسجيل الخروج</button>
+    <button id="btn">اضافة</button>
+
+    <script type="module">
+       import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getDatabase, ref, set, get, push } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2m0uSmD-r_cloBr0Gl3f2PqQ9A7OqlfM",
+            authDomain: "drpp-7dec1.firebaseapp.com",
+            projectId: "drpp-7dec1",
+            storageBucket: "drpp-7dec1.firebasestorage.app",
+            messagingSenderId: "267814620470",
+            appId: "1:267814620470:web:ed3d894d63a994c0493797",
+            measurementId: "G-DK4LB0MXJC",
+            databaseURL: "https://drpp-7dec1-default-rtdb.firebaseio.com/"  // تأكد من إضافة URL قاعدة البيانات
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+
+const currentUser = localStorage.getItem("currentUser");
+
+if (!currentUser) {
+    alert("يرجى تسجيل الدخول أولاً");
+    window.location.href = "login.html";
+}
+
+const btn = document.getElementById("btn");
+btn.addEventListener("click", async () => {
+    const table = document.getElementById("table");
+    const lastRow = table.rows[table.rows.length - 1];
+    const name = lastRow.querySelector(".name-input").value;
+    const specialty = lastRow.querySelector(".specialty-input").value;
+    const image = lastRow.querySelector(".image-input").files[0];
+    const published = lastRow.querySelector(".published-input").value;
+
+    if (!name || !specialty || !image || !published) {
+        alert("يرجى إدخال جميع البيانات");
+        return;
+    }
+
+    const newRowData = {
+        name,
+        specialty,
+        image: image.name, 
+        published,
+    };
+
+    try {
+        const userRef = ref(db, `users/${currentUser}/nursing_faculty`);
+        const newRef = push(userRef);
+        await set(newRef, newRowData);
+
+       
+        displayRow(newRowData);
+
+        createEmptyRow();
+    } catch (error) {
+        console.error("خطأ أثناء إضافة البيانات:", error);
+    }
+});
+
+window.onload = async () => {
+    const userRef = ref(db, `users/${currentUser}/nursing_faculty`);
+    try {
+        const snapshot = await get(userRef);
+
+        if (snapshot.exists()) {
+            const data = Object.values(snapshot.val());
+            data.forEach(item => displayRow(item));
+        }
+        createEmptyRow();
+    } catch (error) {
+        console.error("خطأ في جلب البيانات:", error);
+    }
+};
+
+function createEmptyRow() {
+    const table = document.getElementById("table");
+    const newRow = document.createElement("tr");
+    newRow.innerHTML = `
+        <td><input type="text" class="name-input"></td>
+        <td><input type="text" class="specialty-input"></td>
+        <td><input type="file" class="image-input"></td>
+        <td><input type="text" class="published-input"></td>
+    `;
+    table.appendChild(newRow);
+}
+
+function displayRow(data) {
+    const table = document.getElementById("table");
+    const newRow = document.createElement("tr");
+    newRow.innerHTML = `
+        <td>${data.name}</td>
+        <td>${data.specialty}</td>
+        <td>${data.image}</td>
+        <td>${data.published}</td>
+    `;
+    table.appendChild(newRow);
+}
+const logoutButton = document.getElementById("logout-button");
+
+logoutButton.addEventListener("click", () => {
+    localStorage.removeItem("currentUser");
+
+    window.location.href = "login.html";
+});
+
+      
+    </script>
+
+</body>
+</html>
